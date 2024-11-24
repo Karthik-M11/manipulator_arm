@@ -60,9 +60,11 @@ class Kinematics:
 
         self.t_end_matrix = t_end
         x, y, z = t_end[0][-1], t_end[1][-1], t_end[2][-1]
-        roll, pitch = np.arccos(t_end[0][0]), np.arcsin(t_end[1][0])        
+        roll = np.arctan2(t_end[2][1], t_end[2][2])       
+        pitch = np.arctan2(-t_end[2][0], np.sqrt(pow(t_end[2][1], 2)+pow(t_end[2][2], 2)))
+        yaw = np.arctan2(t_end[1][0], t_end[0][0])
 
-        return [x, y, z, roll, pitch]
+        return [x, y, z, roll, pitch, yaw]
     
 
     def inverse_kinematics(self, coordinates):
@@ -77,9 +79,9 @@ class Kinematics:
             return error
 
         initial_guess = np.zeros(5)
-        result = minimize(objective_function, initial_guess, method='BFGS') 
+        result = minimize(objective_function, initial_guess, method='Nelder-Mead') 
 
-        return result
+        return result.x
 
 
     def arduino_comm(self):
@@ -87,10 +89,15 @@ class Kinematics:
 
 
 kinematics = Kinematics(
-    [0, 1, 1, 0, 0], 
-    [1, 0, 0, 0, 1],
-    [PI/2, 0, 0, -PI/2, 0]
+    [0, 1, 1, 1, 1], 
+    [1, 0, 0, 0, 0],
+    [0, -PI/2, 0, PI/2, 0]
     )
 
-result = kinematics.forward_kinematics([0,0,0,0,0])
-print(result)
+fk_result = kinematics.forward_kinematics([0,0,0,-PI/2,0])
+print(fk_result)
+
+ik_result = kinematics.inverse_kinematics(fk_result)
+# print(ik_result)
+
+print(kinematics.forward_kinematics(ik_result))
