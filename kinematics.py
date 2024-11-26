@@ -41,21 +41,21 @@ class Kinematics:
         '''
         Definition
         '''
-        theta1, theta2, theta3, theta4, theta5 = j_angles
-        a1, a2, a3, a4, a5 = self.link_lengths
-        d1, d2, d3, d4, d5 = self.offset
-        alpha1, alpha2, alpha3, alpha4, alpha5 = self.t_angles
+        theta1, theta2, theta3, theta4 = j_angles
+        a1, a2, a3, a4 = self.link_lengths
+        d1, d2, d3, d4 = self.offset
+        alpha1, alpha2, alpha3, alpha4 = self.t_angles
 
         t_matrix_1 = self.dh_transform(theta1, a1, d1, alpha1)
         t_matrix_2 = self.dh_transform(theta2, a2, d2, alpha2)
         t_matrix_3 = self.dh_transform(theta3, a3, d3, alpha3)
         t_matrix_4 = self.dh_transform(theta4, a4, d4, alpha4)
-        t_matrix_5 = self.dh_transform(theta5, a5, d5, alpha5)
+        # t_matrix_5 = self.dh_transform(theta5, a5, d5, alpha5)
 
-        temp_array = [t_matrix_2, t_matrix_3, t_matrix_4, t_matrix_5]
+        temp_array = [t_matrix_2, t_matrix_3, t_matrix_4]
         t_end = t_matrix_1
 
-        for i in range(4):
+        for i in range(3):
             t_end = np.dot(t_end, temp_array[i])
 
         self.t_end_matrix = t_end
@@ -78,7 +78,7 @@ class Kinematics:
             error = np.linalg.norm(actual - coordinates)
             return error
 
-        initial_guess = np.zeros(5)
+        initial_guess = np.zeros(4)
         result = minimize(objective_function, initial_guess, method='Nelder-Mead') 
 
         return result.x
@@ -88,16 +88,16 @@ class Kinematics:
         pass
 
 
-kinematics = Kinematics(
-    [0, 1, 1, 1, 1], 
-    [1, 0, 0, 0, 0],
-    [0, -PI/2, 0, PI/2, 0]
-    )
+# kinematics = Kinematics(
+#     [0, 1, 1, 1], 
+#     [1, 0, 0, 0],
+#     [PI/2, 0, 0, 0]
+#     )
 
-fk_result = kinematics.forward_kinematics([0,0,0,-PI/2,0])
-print(fk_result)
+# fk_result = kinematics.forward_kinematics([0,0,0,-PI/2])
+# print(fk_result)
 
-ik_result = kinematics.inverse_kinematics(fk_result)
-# print(ik_result)
+# ik_result = kinematics.inverse_kinematics(fk_result)
+# # print(ik_result)
 
-print(kinematics.forward_kinematics(ik_result))
+# print(kinematics.forward_kinematics(ik_result))
