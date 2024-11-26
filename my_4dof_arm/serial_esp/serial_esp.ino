@@ -21,6 +21,12 @@ const int servo1_pin = 18;
 const int servo2_pin = 19;
 const int servo3_pin = 20;
 
+int angle1 = 0;
+int angle2 = 0;
+int angle3 = 0;
+int angle4 = 0;
+int action = 0;
+
 void setup() {
 
     // Initialise serial
@@ -58,6 +64,70 @@ void setup() {
 }
 
 void loop() {
+    if (Serial.available()) {
+    String input = Serial.readStringUntil('\n');  // Read incoming data until a newline character
+    parseData(input);  // Parse the received CSV data
+    moveServos();
+    moveStepper();
+    delay(1000);
+    if (action == 1) {
+        pickup();
+    }
+    else {
+        dropdown();
+    }
+    delay(1000);
+    home();
+    delay(1000);
+    }
+}
 
-	
+
+void parseData(String data) {
+  int commaIndex1 = data.indexOf(',');  // Find first comma
+  int commaIndex2 = data.indexOf(',', commaIndex1 + 1);  // Find second comma
+  int commaIndex3 = data.indexOf(',', commaIndex2 + 1);  // Find third comma
+  int commaIndex4 = data.indexOf(',', commaIndex3 + 1);  //Find last comma
+
+  // Extract each angle and action from the data
+  angle1 = data.substring(0, commaIndex1).toInt();  // First angle
+  angle2 = data.substring(commaIndex1 + 1, commaIndex2).toInt();  // Second angle
+  angle3 = data.substring(commaIndex2 + 1, commaIndex3).toInt();  // Third angle
+  angle4 = data.substring(commaIndex3 + 1, commaIndex4).toInt();  // Fourth angle
+  action = data.substring(commaIndex4 +1).toInt()  // Find the action
+}
+
+
+void moveServos() {
+  // Constrain angles to be between 0 and 180 degrees
+  angle1 = constrain(angle2, 0, 180);
+  angle2 = constrain(angle3, 0, 180);
+  angle3 = constrain(angle4, 0, 180);
+
+  // Move servos to the specified angles
+  myservo1.write(angle2);
+  myservo2.write(angle3);
+  myservo3.write(angle4);
+}
+
+void moveStepper() {
+    // Set the target position for stepper motor
+    stepper.moveTo(angle1);
+}
+
+void home() {
+    // Set the params for home position
+    myservo1.write(angle2);
+    myservo2.write(angle3);
+    myservo3.write(angle4);
+}
+
+void pickup() {
+    // move servo2 to pick disk up
+    myservo2.write(angle3+20);
+}
+
+void dropdown() {
+    // move servo2 to drop disk
+    myservo2.write(angle2-20);
 }
