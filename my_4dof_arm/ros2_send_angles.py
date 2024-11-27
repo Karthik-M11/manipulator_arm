@@ -10,7 +10,7 @@ class JointAnglePublisher(Node):
         super().__init__('joint_angle_publisher')
 
         # Create a publisher for the "joint_states" topic
-        self.publisher_ = self.create_publisher(Quaternion, 'joint_states', 10)
+        self.publisher_ = self.create_publisher(Quaternion, 'joint', 10)
 
         # Create a subscriber for the "button_states" topic (multi-element array)
         self.subscription = self.create_subscription(
