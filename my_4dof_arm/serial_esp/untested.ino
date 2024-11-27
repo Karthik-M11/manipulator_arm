@@ -1,24 +1,28 @@
-#include <SCServo.h>
 #include <ESP32Servo.h>
 #include <AccelStepper.h>
 
-// SCServo instance
-SCSCL sc;
-
 // Standard servo instance
 Servo myservo1;
+Servo myservo2;
 
 // Stepper motor pins
-#define A_STEP_PIN  14
-#define A_DIR_PIN   27
-#define ENABLE_PIN  26
-#define MS1_PIN     25
+#define A_STEP_PIN1  14
+#define A_DIR_PIN2   27
+#define ENABLE_PIN1  26
+#define MS1_PIN1     25
+
+#define A_STEP_PIN2  15
+#define A_DIR_PIN2   28
+#define ENABLE_PIN2  29
+#define MS1_PIN2     30
 
 // Create an AccelStepper instance
-AccelStepper stepper(AccelStepper::DRIVER, A_STEP_PIN, A_DIR_PIN);
+AccelStepper stepper1(AccelStepper::DRIVER, A_STEP_PIN, A_DIR_PIN);
+AccelStepper stepper1(AccelStepper::DRIVER, A_STEP_PIN, A_DIR_PIN);
 
 // Pin assignments for the servo
 const int servo1_pin = 18;
+const int servo2_pin = 19;
 
 // Variables to store angles and actions
 int angle1 = 0;

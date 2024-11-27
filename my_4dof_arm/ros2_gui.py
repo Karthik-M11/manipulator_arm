@@ -1,9 +1,9 @@
 import sys
 import rclpy
 from rclpy.node import Node
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QGridLayout, QVBoxLayout, QLabel, QLineEdit
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QGridLayout, QVBoxLayout, QLabel
 from PyQt5.QtCore import Qt, QTimer
-from std_msgs.msg import Int32MultiArray, String  # Standard ROS2 message types for arrays and strings
+from std_msgs.msg import Int32MultiArray  # Standard ROS2 message type for arrays
 
 class ColorSwitcher(QWidget):
     def __init__(self, ros_node):
@@ -17,7 +17,11 @@ class ColorSwitcher(QWidget):
             1: [(1, self.color_code['red']), (2, self.color_code['black'])],  # Stack 1
             2: [(7, self.color_code['red']), (8, self.color_code['black'])]   # Stack 2
         }
-        self.result = []
+
+        self.scenario_map = {  # Mapping between position and scenario
+            1: 2,  # Scenario 2 when picking from 1
+            2: 1,  # Scenario 1 when picking from 2
+        }
 
     def initUI(self):
         self.setWindowTitle('Set Final Configuration')
@@ -62,30 +66,6 @@ class ColorSwitcher(QWidget):
         """)
         self.sendButton.clicked.connect(self.sendData)
 
-        # Adding a QLineEdit for string input
-        self.inputField = QLineEdit(self)
-        self.inputField.setPlaceholderText("Enter a string to publish")
-        self.inputField.setStyleSheet("""
-            background-color: white;
-            border: 2px solid black;
-            border-radius: 15px;
-            padding: 10px;
-            font-size: 16px;
-        """)
-
-        # New button for publishing the string
-        self.publishStringButton = QPushButton('Publish String')
-        self.publishStringButton.setFixedSize(250, 60)
-        self.publishStringButton.setStyleSheet("""
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, 
-                                         stop:0 #8b0000, stop:1 #ff6347);
-            border-radius: 15px;
-            color: white;
-            font-size: 18px;
-            font-weight: bold;
-        """)
-        self.publishStringButton.clicked.connect(self.publishInputString)
-
         gridLayout = QGridLayout()
         gridLayout.setSpacing(70)
         gridLayout.setContentsMargins(10, 10, 10, 10)
@@ -94,12 +74,9 @@ class ColorSwitcher(QWidget):
         for i in range(10):
             gridLayout.addWidget(self.buttons[i], (i // 2) + 1, i % 2)
 
-        # Adding the input field, move discs button, and new string publish button to layout
         mainLayout = QVBoxLayout()
         mainLayout.addLayout(gridLayout)
         mainLayout.addWidget(self.sendButton, alignment=Qt.AlignCenter)
-        mainLayout.addWidget(self.inputField, alignment=Qt.AlignCenter)
-        mainLayout.addWidget(self.publishStringButton, alignment=Qt.AlignCenter)
         self.setLayout(mainLayout)
 
     def toggleColor(self, idx):
@@ -141,8 +118,21 @@ class ColorSwitcher(QWidget):
             2: [(i+6, self.final_button_states[i+5]) for i in range(5)]  # Stack 2 (positions 6 to 10)
         }
 
-        # Simulate disc movement from initial to final configuration
-        self.simulateDiscMovement(self.initial_positions, final_positions)
+        # Create the sequence of scenarios to execute
+        scenario_sequence = []
+
+        # Determine the sequence based on the initial and final positions
+        for stack, discs in final_positions.items():
+            for target_pos, target_color in discs:
+                # Get the scenario based on the stack position
+                scenario = self.scenario_map.get(target_pos, None)
+                if scenario:
+                    scenario_sequence.append(scenario)
+
+        # Create Int32MultiArray and publish the sequence
+        msg = Int32MultiArray(data=scenario_sequence)
+        self.ros_node.publisher.publish(msg)
+        print(f"Publishing scenario sequence: {scenario_sequence}")
 
     def simulateDiscMovement(self, initial_positions, final_positions):
         # Move discs to temporary positions
@@ -152,9 +142,6 @@ class ColorSwitcher(QWidget):
         # Sort discs to final positions
         print("\nSorting discs to final positions...")
         self.sort_discs_to_final(temp_positions, final_positions)
-
-        # After sorting, publish the result array
-        self.publishResult()
 
     def move_discs_to_temp(self, initial, temp_stack_start):
         temp_positions = initial[2][:]  # Current positions in temporary "stack"
@@ -182,36 +169,14 @@ class ColorSwitcher(QWidget):
 
     def pick_disc(self, position):
         print(f"Picking disc from Position {position}")
-        self.result.append(position+1)  # Append position+1 for "pick"
 
     def place_disc(self, position):
         print(f"Placing disc in Position {position}")
-        self.result.append(position)  # Append position for "place"
-        print(self.result)
-
-    def publishResult(self):
-        # Convert result list to Int32MultiArray and publish
-        msg = Int32MultiArray()
-        msg.data = self.result
-        self.ros_node.publisher.publish(msg)  # Publish the result array
-
-    def publishInputString(self):
-        # Get the string from the input field
-        input_text = self.inputField.text()
-
-        # Create a String message to publish
-        msg = String()
-        msg.data = input_text
-
-        # Publish the string to the ROS2 topic
-        self.ros_node.string_publisher.publish(msg)
-        print(f"Published string: {input_text}")
 
 class ButtonStatePublisher(Node):
     def __init__(self):
         super().__init__('button_state_publisher')
         self.publisher = self.create_publisher(Int32MultiArray, 'button_states', 10)
-        self.string_publisher = self.create_publisher(String, 'input_string', 10)
 
 def main():
     rclpy.init()
