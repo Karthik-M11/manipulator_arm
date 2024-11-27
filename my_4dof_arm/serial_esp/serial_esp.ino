@@ -2,6 +2,8 @@
 #include <AccelStepper.h>
 
 Servo myservo1;  // create servo object to control a servo
+Servo myservo2;
+Servo myservo3;
 
 #define A_STEP_PIN  14  // IO-OUT Pin 1 (A_STEP)
 #define A_DIR_PIN   27  // IO-OUT Pin 2 (A_DIR)

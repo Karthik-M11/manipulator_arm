@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Header, Float32MultiArray
+from geometry_msgs.msg import Quaternion
 from kinematics import Kinematics
 import numpy as np
 
@@ -9,7 +9,7 @@ class JointAngleSender(Node):
         super().__init__('joint_angle_sender')
         
         # Create a publisher to the "joint_states" topic
-        self.publisher_ = self.create_publisher(Float32MultiArray, 'joint_states', 10)
+        self.publisher_ = self.create_publisher(Quaternion, 'joint_states', 10)
         
         # Create a timer to publish joint angles every second (1 Hz)
         self.timer = self.create_timer(1.0, self.publish_joint_angles)
@@ -23,23 +23,18 @@ class JointAngleSender(Node):
 
     def publish_joint_angles(self):
         # Create a JointState message
-        msg = Float32MultiArray()
-
-        # Set example joint names
-
+        msg = Quaternion()     
         angles = self.kinematics.inverse_kinematics([1, 1, 1, 1, 1, 1])
-        
-        angles_64 = []
-        for item in angles:
-            angles_64.append(float(item))
-        
-        # Set example joint angles (in radians)
-        msg.data = angles_64
+        msg.x = float(angles[0])
+        msg.y = float(angles[1])
+        msg.z = float(angles[2])
+        msg.w = float(angles[3])
+
         # Publish the message
         self.publisher_.publish(msg)
         
         # Log the joint angles to the console
-        self.get_logger().info(f'Publishing joint angles: {msg.data}')
+        self.get_logger().info(f'Publishing joint angles: {msg}')
 
 
 def main(args=None):
